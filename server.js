@@ -1,13 +1,9 @@
+// app.js
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 
-
-
-app.use('/',(req,res)=>{
-    res.send('connected');
-})
 // Reserved Events
 let ON_CONNECTION = 'connection';
 let ON_DISCONNECT = 'disconnect';
@@ -21,7 +17,7 @@ let SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
 let SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
 let SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
 
-let listen_port = process.env.PORT||3000;
+let listen_port = 4002;
 
 // Status
 let STATUS_MESSAGE_NOT_SENT = 10001;
@@ -33,6 +29,24 @@ const userMap = new Map();
 io.sockets.on(ON_CONNECTION, function (socket) {
 	onEachUserConnection(socket);
 });
+
+// This is for Private Chat/Single Chat
+function onMessage(socket) {
+	socket.on(EVENT_SINGLE_CHAT_MESSAGE, function (chat_message) {
+		singleChatHandler(socket, chat_message);
+	});
+}
+
+// CHECK if a user is online
+function checkOnline(socket) {
+	socket.on(EVENT_IS_USER_ONLINE, function (chat_user_data) {
+		checkOnlineHandler(socket, chat_user_data);
+	});
+}
+
+function onUserDisconnect(socket) {
+	onDisconnect(socket);
+}
 
 // This function is fired when each user connects to socket
 function onEachUserConnection(socket) {
@@ -49,6 +63,64 @@ function onEachUserConnection(socket) {
 	onMessage(socket);
 	checkOnline(socket);
 	onUserDisconnect(socket);
+}
+
+function singleChatHandler(socket, chat_message) {
+	//
+	print('Message: ' + stringifyJson(chat_message));
+	// Get the 'to' User...
+	let to_user_id = chat_message.to;
+	let from_user_id = chat_message.from;
+	print(from_user_id + '=>' + to_user_id);
+
+	let to_user_socket_id = getSocketIDfromMapForthisUser(to_user_id);
+	let userOnline = userFoundOnMap(to_user_id);
+
+	print('to_user_socket_id: ' + to_user_socket_id + ', userOnline: ' + userOnline);
+
+	if (!userOnline) {
+		print('To Chat User not connected.');
+		chat_message.message_sent_status = STATUS_MESSAGE_NOT_SENT;
+		chat_message.to_user_online_status = false;
+		sendBackToClient(socket, SUB_EVENT_MESSAGE_FROM_SERVER, chat_message);
+		return;
+	}
+
+	// User Connected and his Socket ID Found on the UserMap
+	chat_message.message_sent_status = STATUS_MESSAGE_SENT;
+	chat_message.to_user_online_status = true;
+	sendToConnectedSocket(socket, to_user_socket_id, SUB_EVENT_RECEIVE_MESSAGE, chat_message);
+
+	// Sending Status back to Client
+	// Update the Chat ID and send back
+	chat_message.message_sent_status = STATUS_MESSAGE_SENT;
+	chat_message.to_user_online_status = false;
+	sendBackToClient(socket, SUB_EVENT_MESSAGE_FROM_SERVER, chat_message);
+
+	print('Message Sent!!');
+}
+
+function checkOnlineHandler(socket, chat_user_data) {
+	let to_user_id = chat_user_data.to;
+	print('Checking Online User: ' + to_user_id);
+
+	let to_user_socket_id = getSocketIDfromMapForthisUser(`${to_user_id}`);
+	let user_online = userFoundOnMap(to_user_id);
+
+	print('To User Socket ID: ' + to_user_socket_id);
+
+	chat_user_data.message_sent_status = user_online ? STATUS_MESSAGE_SENT : STATUS_MESSAGE_NOT_SENT;
+	chat_user_data.to_user_online_status = user_online ? true : false;
+	sendBackToClient(socket, SUB_EVENT_IS_USER_CONNECTED, chat_user_data);
+}
+
+function onDisconnect(socket) {
+	socket.on(ON_DISCONNECT, function () {
+		print('Disconnected ' + socket.id);
+		removeUserWithSocketIdFromMap(socket.id);
+		socket.removeAllListeners('message');
+		socket.removeAllListeners('disconnect');
+	});
 }
 
 function addUserToMap(key_user_id, val) {
@@ -107,4 +179,4 @@ function printNumOnlineUsers() {
 	print('Online Users: ' + userMap.size);
 }
 
-server.listen(listen_port,()=>console.log(`Server is running on port ${listen_port} `));
+server.listen(listen_port);
