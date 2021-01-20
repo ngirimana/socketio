@@ -62,7 +62,7 @@ const singleMessageHandler=(socket,chat_message)=>{
 	sendToConnectedSocket(socket,to_user_socket_id,SUB_EVENT_RECEIVE_MESSAGE,chat_message);
 }
 const sendToConnectedSocket=(socket,to_user_socket_id,event,chat_message)=>{
-	socket.to(`${to_user_socket_id}`).emit(event.JSON.stringify(chat_message));
+	socket.to(`${to_user_socket_id}`).emit(event,JSON.stringify(chat_message));
 }
 const getSocketIDFromMapForThisUser=(to_user_id)=>{
 	let userMapVal=userMap.get(`${to_user_id}`);
