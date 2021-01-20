@@ -1,5 +1,6 @@
 // app.js
 var express = require('express');
+const { on } = require('nodemon');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
@@ -31,20 +32,18 @@ io.sockets.on(ON_CONNECTION, function (socket) {
    });
    function onEachUserConnection(socket) {
 	print('---------------------------------------');
-	print('Connected => Socket ID ' + socket.id + ', User: ' + stringfyToJson(socket.handshake.query));
-//    onDisconnected(socket);
+	print('Connected => Socket ID ' + socket.id + ', User: ' + JSON.stringify(socket.handshake.query));
+	onDisconnected(socket);
 }
-// const onDisconnected=(socket)=>{
-//   socket.on(ON_DISCONNECT,()=>{
-// 	   print(`Disconnected ${socket.id}`);
-// 	   socket.removeAllListeners(ON_DISCONNECT);
-//   });
-// }
+const onDisconnected=(socket)=>{
+  socket.on(ON_DISCONNECT,()=>{
+	   print(`Disconnected ${socket.id}`);
+	   socket.removeAllListeners(ON_DISCONNECT);
+  });
+}
 
 function print(txt){
 	console.log(txt);
 }
-function stringfyToJson (data){
-	return JSON.stringfy(data);
-}
+
 
