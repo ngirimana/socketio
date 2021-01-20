@@ -19,7 +19,7 @@ let SUB_EVENT_IS_USER_CONNECTED="is_user_connected";
 const  STATUS_MESSAGE_NOT_SENT = 1001;
 const STATUS_MESSAGE_SENT = 1002;
 
-let listen_port=3000;
+let listen_port= process.env.PPORT||3000;
 
 const userMap=new Map();
 io.sockets.on(ON_CONNECTION,()=>{
