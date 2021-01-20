@@ -10,7 +10,7 @@ const ON_DISCONNECT = 'disconnect';
 let EVENT_IS_USER_ONLINE = 'check_online';
 let EVENT_SINGLE_CHAT_MESSAGE = 'single_chat_message';
 // Sub Events
-let SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
+let EVENT_RECEIVE_MESSAGE = 'receive_message';
 let SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
 let SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
 
@@ -35,10 +35,23 @@ io.sockets.on(ON_CONNECTION, function (socket) {
 	const from_user_id=socket.handshake.query.from;
 	let userMapVal={socket_id:socket.id};
 	addUserToMap(from_user_id,userMapVal);
+	print(userMap);
 	printOnlineUsers();
+
+	onMessage(socket);
+
 	onDisconnected(socket);
 }
-function onDisconnected (socket){
+const onMessage=(socket)=>{
+	socket.on(EVENT_SINGLE_CHAT_MESSAGE,(chat_message)=>{
+		singleMessageHandler(socket,chat_message);
+	});
+}
+const singleMessageHandler=(socket,chat_message)=>{
+	print(`OnMessage: ${JSON.stringify(chat_message)}`);
+}
+
+const onDisconnected =(socket)=>{
   socket.on(ON_DISCONNECT,function(){
 	   print(`Disconnected ${socket.id}`);
 	   socket.removeAllListeners(ON_DISCONNECT);
@@ -52,7 +65,7 @@ const printOnlineUsers=()=>{
 	print(`Online users: ${userMap.size}`);
 }
 
-function print(txt){
+const print=(txt)=>{
 	console.log(txt);
 }
 
