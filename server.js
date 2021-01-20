@@ -10,7 +10,7 @@ const ON_DISCONNECT = 'disconnect';
 let EVENT_IS_USER_ONLINE = 'check_online';
 let EVENT_SINGLE_CHAT_MESSAGE = 'single_chat_message';
 // Sub Events
-let EVENT_RECEIVE_MESSAGE = 'receive_message';
+let SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
 let SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
 let SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
 
@@ -49,8 +49,28 @@ const onMessage=(socket)=>{
 }
 const singleMessageHandler=(socket,chat_message)=>{
 	print(`OnMessage: ${JSON.stringify(chat_message)}`);
+	let to_user_id=chat_message.to;
+	let from_user_id=chat_message.from;
+	print(`${from_user_id} => ${to_user_id}`);
+	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
+	if(to_user_socket_id==undefined){
+		print('Chat user not connected');
+		chat_message.to_user_online_status=false;
+		return;
+	}
+	chat_message.to_user_online_status=true;
+	sendToConnectedSocket(socket,to_user_socket_id,SUB_EVENT_RECEIVE_MESSAGE,chat_message);
 }
-
+const sendToConnectedSocket=(socket,to_user_socket_id,event,chat_message)=>{
+	socket.to(`${to_user_socket_id}`).emit(event.JSON.stringify(chat_message));
+}
+const getSocketIDFromMapForThisUser=(to_user_id)=>{
+	let userMapVal=userMap.get(`${to_user_id}`);
+	if(undefined==userMapVal){
+		return undefined;
+	}
+	return userMapVal.socket_id;
+}
 const onDisconnected =(socket)=>{
   socket.on(ON_DISCONNECT,function(){
 	   print(`Disconnected ${socket.id}`);
