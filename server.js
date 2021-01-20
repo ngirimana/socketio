@@ -1,6 +1,5 @@
 // app.js
 var express = require('express');
-const { on } = require('nodemon');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
