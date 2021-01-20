@@ -22,20 +22,22 @@ const listen_port= process.env.PORT||3000;
 app.use('/',(req,res)=>{
 	res.send('Server is running');
 })
+
+server.listen(listen_port,()=>{console.log(`Server is running on ${listen_port}`)});
+
 const userMap=new Map();
 io.sockets.on(ON_CONNECTION, function (socket) {
 	onEachUserConnection(socket);
    });
-const onEachUserConnection=(socket)=>{
-print('----------------------');
-print(`Connected => Socket ID': ${socket.id}, User: ${stringfyToJson(socket.handshake.query)}`);
-}
+   function onEachUserConnection(socket) {
+	print('---------------------------------------');
+	print('Connected => Socket ID ' + socket.id + ', User: ' + JSON.stringify(socket.handshake.query));
+   }
 
-const print=(txt)=>{
+function print(txt){
 	console.log(txt);
 }
-const stringfyToJson =(data)=>{
+function stringfyToJson (data){
 	return JSON.stringfy(data);
 }
 
-server.listen(listen_port,()=>{console.log(`Server is running on ${listen_port}`)});
