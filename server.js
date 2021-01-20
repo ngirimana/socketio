@@ -20,7 +20,9 @@ const  STATUS_MESSAGE_NOT_SENT = 1001;
 const STATUS_MESSAGE_SENT = 1002;
 
 const listen_port= process.env.PORT||3000;
-
+app.use('/',(req,res)=>{
+	res.send('Server is running');
+})
 const userMap=new Map();
 io.sockets.on(ON_CONNECTION,()=>{
 	onEachUserConnection(socket);
