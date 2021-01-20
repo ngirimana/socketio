@@ -32,6 +32,10 @@ io.sockets.on(ON_CONNECTION, function (socket) {
    function onEachUserConnection(socket) {
 	print('---------------------------------------');
 	print(`Connected => Socket ID ${socket.id} , User:${JSON.stringify(socket.handshake.query)}`);
+	const from_user_id=socket.handshake.query.from;
+	let userMapVal={socket_id:socket.id};
+	addUserToMap(from_user_id,userMapVal);
+	printOnlineUsers();
 	onDisconnected(socket);
 }
 function onDisconnected (socket){
@@ -39,6 +43,13 @@ function onDisconnected (socket){
 	   print(`Disconnected ${socket.id}`);
 	   socket.removeAllListeners(ON_DISCONNECT);
   });
+}
+
+const addUserToMap=(key_user_id,socket_id)=>{
+	userMap.set(key_user_id,socket_id)
+}
+const printOnlineUsers=()=>{
+	print(`Online users: ${userMap.size}`);
 }
 
 function print(txt){
