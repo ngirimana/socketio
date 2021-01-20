@@ -31,8 +31,15 @@ io.sockets.on(ON_CONNECTION, function (socket) {
    });
    function onEachUserConnection(socket) {
 	print('---------------------------------------');
-	print('Connected => Socket ID ' + socket.id + ', User: ' + JSON.stringify(socket.handshake.query));
-   }
+	print('Connected => Socket ID ' + socket.id + ', User: ' + stringfyToJson(socket.handshake.query));
+   onDisconnected(socket);
+}
+const onDisconnected=(socket)=>{
+  socket.on(ON_DISCONNECT,()=>{
+	   print(`Disconnected ${socket.id}`);
+	   socket.removeAllListeners(ON_DISCONNECT);
+  });
+}
 
 function print(txt){
 	console.log(txt);
