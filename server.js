@@ -5,8 +5,8 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 // Reserved Events
-let ON_CONNECTION = 'connection';
-let ON_DISCONNECT = 'disconnect';
+const ON_CONNECTION = 'connection';
+const ON_DISCONNECT = 'disconnect';
 // Main Events
 let EVENT_IS_USER_ONLINE = 'check_online';
 let EVENT_SINGLE_CHAT_MESSAGE = 'single_chat_message';
@@ -32,11 +32,11 @@ io.sockets.on(ON_CONNECTION, function (socket) {
    });
    function onEachUserConnection(socket) {
 	print('---------------------------------------');
-	print('Connected => Socket ID ' + socket.id + ', User: ' + JSON.stringify(socket.handshake.query));
+	print(`Connected => Socket ID ${socket.id} , User:${JSON.stringify(socket.handshake.query)}`);
 	onDisconnected(socket);
 }
-const onDisconnected=(socket)=>{
-  socket.on(ON_DISCONNECT,()=>{
+function onDisconnected (socket){
+  socket.on(ON_DISCONNECT,function(){
 	   print(`Disconnected ${socket.id}`);
 	   socket.removeAllListeners(ON_DISCONNECT);
   });
