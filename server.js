@@ -11,8 +11,8 @@ let EVENT_IS_USER_ONLINE = 'check_online';
 let EVENT_SINGLE_CHAT_MESSAGE = 'single_chat_message';
 // Sub Events
 const SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
-let SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
-let SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
+const SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
+const SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
 
 // status
 const  STATUS_MESSAGE_NOT_SENT = 1001;
@@ -89,9 +89,28 @@ const getSocketIDFromMapForThisUser=(to_user_id)=>{
 	}
 	return userMapVal.socket_id;
 }
+const removeUserWithSocketIdFromMap=(socket_id)=>{
+	print(`Deleting user from map :${socket_id}`);
+	let toDeleteUser;
+	for(let key of userMap){
+		let userMapValue=key[1];
+		if(userMapValue.socket_id==socket_id){
+			toDeleteUser=key[0];
+		}
+	}
+	print(`Deleting user : ${toDeleteUser}`);
+	if(undefined!=toDeleteUser){
+		userMap.delete(toDeleteUser);
+	}
+	print(userMap);
+	printOnlineUsers();
+}
 const onDisconnected =(socket)=>{
   socket.on(ON_DISCONNECT,function(){
 	   print(`Disconnected ${socket.id}`);
+	   removeUserWithSocketIdFromMap(socket.id);
+	   socket.removeAllListeners( SUB_EVENT_RECEIVE_MESSAGE); 
+	   socket.removeAllListeners(SUB_EVENT_IS_USER_CONNECTED); 
 	   socket.removeAllListeners(ON_DISCONNECT);
   });
 }
