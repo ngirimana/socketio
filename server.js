@@ -10,7 +10,7 @@ const ON_DISCONNECT = 'disconnect';
 let EVENT_IS_USER_ONLINE = 'check_online';
 let EVENT_SINGLE_CHAT_MESSAGE = 'single_chat_message';
 // Sub Events
-let SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
+const SUB_EVENT_RECEIVE_MESSAGE = 'receive_message';
 let SUB_EVENT_MESSAGE_FROM_SERVER = 'message_from_server';
 let SUB_EVENT_IS_USER_CONNECTED = 'is_user_connected';
 
@@ -53,6 +53,7 @@ const singleMessageHandler=(socket,chat_message)=>{
 	let from_user_id=chat_message.from;
 	print(`${from_user_id} => ${to_user_id}`);
 	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
+	print(to_user_socket_id);
 	if(to_user_socket_id==undefined){
 		print('Chat user not connected');
 		chat_message.to_user_online_status=false;
