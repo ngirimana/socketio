@@ -85,9 +85,8 @@ const onlineCheckHandler=(socket,chat_user_details)=>{
  * @param {Object} chat_message 
  */
 const singleMessageHandler=(socket,chat_message)=>{
-	let to_user_id=chat_message.to;
-	let from_user_id=chat_message.from;
-	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
+	const to_user_id=chat_message.to;
+	const to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
 	if(to_user_socket_id==undefined){
 		chat_message.to_user_online_status=false;
 		return;
