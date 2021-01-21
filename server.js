@@ -35,120 +35,126 @@ server.listen(listen_port,()=>{console.log(`Server is running on ${listen_port}`
  * declaring userMap
  */
 const userMap=new Map();
+
 /**
- * connection to socket @param {*} socket
- */
-io.sockets.on(ON_CONNECTION, function (socket) {
-	onEachUserConnection(socket);
-   });
-   const onEachUserConnection=(socket)=> {
-	const from_user_id=socket.handshake.query.from;
-	let userMapVal={socket_id:socket.id};
-	addUserToMap(from_user_id,userMapVal);
-	onMessage(socket);
-	checkOnline(socket);
-	onDisconnected(socket);
-}
-/**
- * sending message on socket
+ * send message to user connected on socket
  * @param {*} socket 
+ * @param {Strinf} toUserSocketId 
+ * @param {String} event 
+ * @param {Object} chatMessage 
  */
-const onMessage=(socket)=>{
-	socket.on(EVENT_SINGLE_CHAT_MESSAGE,(chat_message)=>{
-		singleMessageHandler(socket,chat_message);
-	});
+
+const sendToConnectedSocket=(socket,toUserSocketId,event,chatMessage)=>{
+	socket.to(`${toUserSocketId}`).emit(event,JSON.stringify(chatMessage));
+}
+
+/**
+ * getting socket id using receiver id
+ * @param {String} toUserId 
+ */
+
+const getSocketIDFromMapForThisUser=(toUserId)=>{
+	const userMapVal=userMap.get(`${toUserId}`);
+	if(undefined===userMapVal){
+		return undefined;
+	}
+	return userMapVal.socket_id;
 }
 /**
- * check if user is online
+ * 
  * @param {*} socket 
+ * @param {String} event 
+ * @param {Object} chatMessage 
  */
-const checkOnline=(socket)=>{
-	socket.on(EVENT_IS_USER_ONLINE,(chat_user_details)=>{
-		onlineCheckHandler(socket,chat_user_details);
-	});
+
+const sendBackToclient=(socket,event,chatMessage)=>{
+	socket.emit(event,JSON.stringify(chatMessage))
+
 }
+
 /**
  * determining if user is online
  * @param {*} socket 
  * @param {Object} chat_user_details 
  */
-const onlineCheckHandler=(socket,chat_user_details)=>{
-	let to_user_id=chat_user_details.to;
-	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
-	let isOnline=undefined!=to_user_socket_id;
-	chat_user_details.to_user_online_status=isOnline;
-	sendBackToclient(socket,SUB_EVENT_IS_USER_CONNECTED,chat_user_details);
+
+const onlineCheckHandler=(socket,chatUserDetails)=>{
+	const toUserId=chatUserDetails.to;
+	const toUserSocketId=getSocketIDFromMapForThisUser(toUserId);
+	const isOnline=undefined!==toUserSocketId;
+	chatUserDetails.to_user_online_status=isOnline;
+	sendBackToclient(socket,SUB_EVENT_IS_USER_CONNECTED,chatUserDetails);
 }
+
 /**
- * 
+ * check if user is online
+ * @param {*} socket 
+ */
+
+const checkOnline=(socket)=>{
+	socket.on(EVENT_IS_USER_ONLINE,(chatUserDetails)=>{
+		onlineCheckHandler(socket,chatUserDetails);
+	});
+}
+
+/**
+ * handling message
  * @param {*} socket 
  * @param {Object} chat_message 
  */
-const singleMessageHandler=(socket,chat_message)=>{
-	const to_user_id=chat_message.to;
-	const to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
-	if(to_user_socket_id==undefined){
-		chat_message.to_user_online_status=false;
+
+const singleMessageHandler=(socket,chatMessage)=>{
+	const toUserId=chatMessage.to;
+	const toUserSocketId=getSocketIDFromMapForThisUser(toUserId);
+	if(toUserSocketId===undefined){
+		chatMessage.to_user_online_status=false;
 		return;
 	}
-	chat_message.to_user_online_status=true;
-	sendToConnectedSocket(socket,to_user_socket_id,SUB_EVENT_RECEIVE_MESSAGE,chat_message);
+	 
+	chatMessage.to_user_online_status=true;
+	sendToConnectedSocket(socket,toUserSocketId,SUB_EVENT_RECEIVE_MESSAGE,chatMessage);
 }
 
 /**
- * get message from socket
+ * sending message on socket
  * @param {*} socket 
- * @param {String} event 
- * @param {Object} chat_message 
  */
 
- const sendBackToclient=(socket,event,chat_message)=>{
-	socket.emit(event,JSON.stringify(chat_message))
-
- }
-
- /**
-  * send message to user connected on socket
-  * @param {*} socket 
-  * @param {String} to_user_socket_id 
-  * @param {String} event 
-  * @param {Object} chat_message 
-  */
-
-const sendToConnectedSocket=(socket,to_user_socket_id,event,chat_message)=>{
-	socket.to(`${to_user_socket_id}`).emit(event,JSON.stringify(chat_message));
-}
-
-/**
- * getting socket id using receiver id
- * @param {String} to_user_id 
- */
-
-const getSocketIDFromMapForThisUser=(to_user_id)=>{
-	let userMapVal=userMap.get(`${to_user_id}`);
-	if(undefined==userMapVal){
-		return undefined;
-	}
-	return userMapVal.socket_id;
+const onMessage=(socket)=>{
+	socket.on(EVENT_SINGLE_CHAT_MESSAGE,(chatMessage)=>{
+		singleMessageHandler(socket,chatMessage);
+	});
 }
 
 /**
  * remove user from user map using socket id
- * @param {String} socket_id 
+ * @param {String} socketId 
  */
 
-const removeUserWithSocketIdFromMap=(socket_id)=>{
+const removeUserWithSocketIdFromMap=(socketId)=>{
 	let toDeleteUser;
-	for(let key of userMap){
-		let userMapValue=key[1];
-		if(userMapValue.socket_id==socket_id){
+	for(const key of userMap){
+		const userMapValue=key[1];
+		if(userMapValue.socket_id === socketId){
 			toDeleteUser=key[0];
 		}
 	}
-	if(undefined!=toDeleteUser){
+	if(undefined!==toDeleteUser){
 		userMap.delete(toDeleteUser);
 	}
 	
+}
+
+
+
+/**
+ * Add user to map to get total number of user on socket
+ * @param {String} keyUserId 
+ * @param {String} socketId
+ */
+
+const addUserToMap=(keyUserId,socketId)=>{
+	userMap.set(keyUserId,socketId)
 }
 
 /**
@@ -157,26 +163,36 @@ const removeUserWithSocketIdFromMap=(socket_id)=>{
  */
 
 const onDisconnected =(socket)=>{
-  socket.on(ON_DISCONNECT,function(){
+	socket.on(ON_DISCONNECT,()=>{
 	   removeUserWithSocketIdFromMap(socket.id);
 	   socket.removeAllListeners( SUB_EVENT_RECEIVE_MESSAGE); 
 	   socket.removeAllListeners(SUB_EVENT_IS_USER_CONNECTED); 
 	   socket.removeAllListeners(ON_DISCONNECT);
-  });
+	});
 }
 
 /**
- * Add user to map to get total number of user on socket
- * @param {String} key_user_id 
- * @param {String} socket_id 
+ * when each user conected
+ * @param {*} socket 
  */
 
-const addUserToMap=(key_user_id,socket_id)=>{
-	userMap.set(key_user_id,socket_id)
+const onEachUserConnection=(socket)=> {
+	const fromUserId=socket.handshake.query.from;
+	const userMapVal={socket_id:socket.id};
+	addUserToMap(fromUserId,userMapVal);
+	onMessage(socket);
+	checkOnline(socket);
+	onDisconnected(socket);
 }
 
+/**
+ * connection to socket @param {*} socket
+ */
 
+io.sockets.on(ON_CONNECTION,  (socket)=> {
+	onEachUserConnection(socket);
+	/**
+ * vidoe chat
+ */
 
-
-
-
+});
