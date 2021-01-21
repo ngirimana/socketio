@@ -41,15 +41,10 @@ const userMap=new Map();
 io.sockets.on(ON_CONNECTION, function (socket) {
 	onEachUserConnection(socket);
    });
-   function onEachUserConnection(socket) {
-	print('---------------------------------------');
-	print(`Connected => Socket ID ${socket.id} , User:${JSON.stringify(socket.handshake.query)}`);
+   const onEachUserConnection=(socket)=> {
 	const from_user_id=socket.handshake.query.from;
 	let userMapVal={socket_id:socket.id};
 	addUserToMap(from_user_id,userMapVal);
-	print(userMap);
-	printOnlineUsers();
-
 	onMessage(socket);
 	checkOnline(socket);
 	onDisconnected(socket);
@@ -79,7 +74,6 @@ const checkOnline=(socket)=>{
  */
 const onlineCheckHandler=(socket,chat_user_details)=>{
 	let to_user_id=chat_user_details.to;
-	print(`Checking online User => ${to_user_id}` );
 	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
 	let isOnline=undefined!=to_user_socket_id;
 	chat_user_details.to_user_online_status=isOnline;
@@ -91,14 +85,10 @@ const onlineCheckHandler=(socket,chat_user_details)=>{
  * @param {Object} chat_message 
  */
 const singleMessageHandler=(socket,chat_message)=>{
-	print(`OnMessage: ${JSON.stringify(chat_message)}`);
 	let to_user_id=chat_message.to;
 	let from_user_id=chat_message.from;
-	print(`${from_user_id} => ${to_user_id}`);
 	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
-	print(to_user_socket_id);
 	if(to_user_socket_id==undefined){
-		print('Chat user not connected');
 		chat_message.to_user_online_status=false;
 		return;
 	}
@@ -149,7 +139,6 @@ const getSocketIDFromMapForThisUser=(to_user_id)=>{
  */
 
 const removeUserWithSocketIdFromMap=(socket_id)=>{
-	print(`Deleting user from map :${socket_id}`);
 	let toDeleteUser;
 	for(let key of userMap){
 		let userMapValue=key[1];
@@ -157,12 +146,10 @@ const removeUserWithSocketIdFromMap=(socket_id)=>{
 			toDeleteUser=key[0];
 		}
 	}
-	print(`Deleting user : ${toDeleteUser}`);
 	if(undefined!=toDeleteUser){
 		userMap.delete(toDeleteUser);
 	}
-	print(userMap);
-	printOnlineUsers();
+	
 }
 
 /**
@@ -172,7 +159,6 @@ const removeUserWithSocketIdFromMap=(socket_id)=>{
 
 const onDisconnected =(socket)=>{
   socket.on(ON_DISCONNECT,function(){
-	   print(`Disconnected ${socket.id}`);
 	   removeUserWithSocketIdFromMap(socket.id);
 	   socket.removeAllListeners( SUB_EVENT_RECEIVE_MESSAGE); 
 	   socket.removeAllListeners(SUB_EVENT_IS_USER_CONNECTED); 
@@ -190,21 +176,8 @@ const addUserToMap=(key_user_id,socket_id)=>{
 	userMap.set(key_user_id,socket_id)
 }
 
-/**
- * print users who are online
- */
 
-const printOnlineUsers=()=>{
-	print(`Online users: ${userMap.size}`);
-}
 
-/**
- * Printing some text to Screen
- * @param {String } txt 
- */
 
-const print=(txt)=>{
-	console.log(txt);
-}
 
 
