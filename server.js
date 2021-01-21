@@ -39,13 +39,26 @@ io.sockets.on(ON_CONNECTION, function (socket) {
 	printOnlineUsers();
 
 	onMessage(socket);
-
+	checkOnline(socket);
 	onDisconnected(socket);
 }
 const onMessage=(socket)=>{
 	socket.on(EVENT_SINGLE_CHAT_MESSAGE,(chat_message)=>{
 		singleMessageHandler(socket,chat_message);
 	});
+}
+const checkOnline=(socket)=>{
+	socket.on(EVENT_IS_USER_ONLINE,(chat_user_details)=>{
+		onlineCheckHandler(socket,chat_user_details);
+	});
+}
+const onlineCheckHandler=(socket,chat_user_details)=>{
+	let to_user_id=chat_user_details.to;
+	print(`Checking online User => ${to_user_id}` );
+	let to_user_socket_id=getSocketIDFromMapForThisUser(to_user_id);
+	let isOnline=undefined!=to_user_socket_id;
+	chat_user_details.to_user_online_status=isOnline;
+	sendBackToclient(socket,SUB_EVENT_IS_USER_CONNECTED,chat_user_details);
 }
 const singleMessageHandler=(socket,chat_message)=>{
 	print(`OnMessage: ${JSON.stringify(chat_message)}`);
@@ -62,6 +75,10 @@ const singleMessageHandler=(socket,chat_message)=>{
 	chat_message.to_user_online_status=true;
 	sendToConnectedSocket(socket,to_user_socket_id,SUB_EVENT_RECEIVE_MESSAGE,chat_message);
 }
+ const sendBackToclient=(socket,event,chat_message)=>{
+	socket.emit(event,JSON.stringify(chat_message))
+
+ }
 const sendToConnectedSocket=(socket,to_user_socket_id,event,chat_message)=>{
 	socket.to(`${to_user_socket_id}`).emit(event,JSON.stringify(chat_message));
 }
